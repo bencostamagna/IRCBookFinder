@@ -45,24 +45,43 @@ void m_event_connect(irc_session_t * session, const char * event, const char * o
     qDebug() << "event_connect: event " << QString(event) << ", origin: " << QString(origin) << ", params: " << str_params;
 
 
-    if (irc_cmd_join( session, "#chupacabratest", 0 ))
-	qDebug() << "join failed";
 
     IrcHelper::getInstance()->OnConnected();
 }
 
+
+void callback_dcc_recv_file (irc_session_t * session, irc_dcc_t id, int status, void * ctx, const char * data, unsigned int length)
+{
+    qDebug() << "event_connect: status " << QString::number(status) << ", length: " << QString::number(length);
+    if ( status )
+    {
+	IrcHelper::getInstance()->ProtocolMessageBox();
+    }
+    else if ( data == 0 )
+    {
+	// File transfer has been finished
+	qDebug() << "File has been received successfully";
+    }
+    else
+    {
+	// More file content has been received. Store it in memory, write to disk or something
+	printf ("Received %d bytes of data\n", length );
+    }
+}
+
+
+
+void callback_event_dcc_file(irc_session_t* session, const char* nick, const char* addr, const char* filename, unsigned long size, irc_dcc_t dccid)
+{
+    qDebug() << "file transfer from " << QString(nick) << " of file " << QString(filename) << ", size "<< QString::number(size);
+    irc_dcc_accept(session, dccid, 0, callback_dcc_recv_file);
+}
+
+
+
 //dummy event_numeric
 void event_numeric(irc_session_t * session, unsigned int event, const char * origin, const char ** params, unsigned int count)
 {
-
-    //QString str_params;
-    //for (uint i =0; i < count; ++i)
-    //{
-	//str_params+="|";
-	//str_params+= params[i];
-    //}
-    /*str_params+="|";*/
-    //qDebug() << "event_numeric: event " << QString::number(event) << ", origin: " << QString(origin) << ", params: " << str_params;
 }
 
 
@@ -74,12 +93,20 @@ void IrcHelper::ProtocolMessageBox()
  
 }
 
+
+
 void IrcHelper::OnConnected()
 {
-    QMessageBox msgBox;
-    msgBox.setText("CONNECTED");
-    msgBox.exec();
+    if (irc_cmd_join(m_session, m_channel.toUtf8(), 0 ))
+	ProtocolMessageBox();
     emit sig_connected();
+}
+
+
+void IrcHelper::searchString(QString str)
+{
+    if (irc_cmd_msg(m_session, m_channel.toUtf8(), "@search "+str.toUtf8()))
+	ProtocolMessageBox();
 }
 
 void IrcHelper::run()
@@ -88,12 +115,12 @@ void IrcHelper::run()
     irc_callbacks_t callbacks;
 
     // Init it
-    memset ( &callbacks, 0, sizeof(callbacks) );
+    memset(&callbacks, 0, sizeof(callbacks));
 
     // Set up the mandatory events
     callbacks.event_connect = m_event_connect;
     callbacks.event_numeric = event_numeric;
-
+    callbacks.event_dcc_send_req = callback_event_dcc_file;
     // Set up the rest of events
 
     // Now create the m_session

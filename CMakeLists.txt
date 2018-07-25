@@ -13,15 +13,15 @@ project(${PROJECT_NAME})
 find_package( Qt5Core )
 find_package( Qt5Widgets )
 
-set (f_src src/main.cpp src/mainwindow.cpp)
-set (f_inc inc/mainwindow.h)
+set (f_src src/main.cpp src/mainwindow.cpp src/irchelper.cpp)
+set (f_inc inc/mainwindow.h inc/irchelper.h)
 include_directories(inc)
-
 
 qt5_wrap_cpp(f_moc_inc ${f_inc})
 add_executable(${EXE_NAME} ${f_src} ${f_moc_inc}) 
 qt5_use_modules(${EXE_NAME} Widgets)
 
+target_link_libraries(${EXE_NAME} libircclient.so)
 
 # generates the compilation database for YouCompleteMe to use
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)

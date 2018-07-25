@@ -24,13 +24,17 @@ class IrcHelper: public QThread
 
 	void run();
 	void ProtocolMessageBox();
-
 	void setServerData(QString server, int port, QString nick, QString channel);
+
 	void OnConnected();
+	void OnFileRcvd(irc_dcc_t dccid);
 
 
     signals:
 	void sig_connected();
+
+    public slots:
+	void searchString(QString str);
 
     private:
 	IrcHelper();
