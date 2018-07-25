@@ -13,8 +13,8 @@ project(${PROJECT_NAME})
 find_package( Qt5Core )
 find_package( Qt5Widgets )
 
-set (f_src src/main.cpp src/mainwindow.cpp src/irchelper.cpp)
-set (f_inc inc/mainwindow.h inc/irchelper.h)
+set (f_src src/main.cpp src/mainwindow.cpp src/irchelper.cpp src/filehelper.cpp)
+set (f_inc inc/mainwindow.h inc/irchelper.h inc/filehelper.h)
 include_directories(inc)
 
 qt5_wrap_cpp(f_moc_inc ${f_inc})

@@ -7,6 +7,8 @@
 
 #include "irchelper.h"
 
+#include "filehelper.h"
+
 #include <cstring>
 #include <QDebug>
 #include <QMessageBox>
@@ -52,20 +54,23 @@ void m_event_connect(irc_session_t * session, const char * event, const char * o
 
 void callback_dcc_recv_file (irc_session_t * session, irc_dcc_t id, int status, void * ctx, const char * data, unsigned int length)
 {
-    qDebug() << "event_connect: status " << QString::number(status) << ", length: " << QString::number(length);
+    //qDebug() << "event_connect: status " << QString::number(status) << ", length: " << QString::number(length);
     if ( status )
     {
+	FileHelper::end_write();
 	IrcHelper::getInstance()->ProtocolMessageBox();
     }
     else if ( data == 0 )
     {
 	// File transfer has been finished
 	qDebug() << "File has been received successfully";
+	FileHelper::end_write();
     }
     else
     {
 	// More file content has been received. Store it in memory, write to disk or something
 	printf ("Received %d bytes of data\n", length );
+	FileHelper::write_buffer(data, length);
     }
 }
 
@@ -75,6 +80,8 @@ void callback_event_dcc_file(irc_session_t* session, const char* nick, const cha
 {
     qDebug() << "file transfer from " << QString(nick) << " of file " << QString(filename) << ", size "<< QString::number(size);
     irc_dcc_accept(session, dccid, 0, callback_dcc_recv_file);
+
+    FileHelper::init_write(filename);
 }
 
 
