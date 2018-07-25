@@ -15,6 +15,8 @@
 
 	    //("chat.freenode.net", 6667, "chupacabot", "#chupacabratest");
 IrcHelper::IrcHelper()
+    :	m_bSearching{false},
+	m_bDownloading{false}
 {}
 
 IrcHelper::~IrcHelper()
@@ -54,34 +56,14 @@ void m_event_connect(irc_session_t * session, const char * event, const char * o
 
 void callback_dcc_recv_file (irc_session_t * session, irc_dcc_t id, int status, void * ctx, const char * data, unsigned int length)
 {
-    //qDebug() << "event_connect: status " << QString::number(status) << ", length: " << QString::number(length);
-    if ( status )
-    {
-	FileHelper::end_write();
-	IrcHelper::getInstance()->ProtocolMessageBox();
-    }
-    else if ( data == 0 )
-    {
-	// File transfer has been finished
-	qDebug() << "File has been received successfully";
-	FileHelper::end_write();
-    }
-    else
-    {
-	// More file content has been received. Store it in memory, write to disk or something
-	printf ("Received %d bytes of data\n", length );
-	FileHelper::write_buffer(data, length);
-    }
+    IrcHelper::getInstance()->OnFileRcvd(session, id, status, ctx, data, length);
 }
 
 
 
 void callback_event_dcc_file(irc_session_t* session, const char* nick, const char* addr, const char* filename, unsigned long size, irc_dcc_t dccid)
 {
-    qDebug() << "file transfer from " << QString(nick) << " of file " << QString(filename) << ", size "<< QString::number(size);
-    irc_dcc_accept(session, dccid, 0, callback_dcc_recv_file);
-
-    FileHelper::init_write(filename);
+    IrcHelper::getInstance()->OnFileTransfer(session, nick, addr, filename, size, dccid);
 }
 
 
@@ -100,7 +82,51 @@ void IrcHelper::ProtocolMessageBox()
  
 }
 
+void IrcHelper::OnFileTransfer(irc_session_t* session, const char* nick, const char* addr, const char* filename, unsigned long size, irc_dcc_t dccid)
+{
+    qDebug() << "file transfer from " << QString(nick) << " of file " << QString(filename) << ", size "<< QString::number(size);
+    irc_dcc_accept(session, dccid, 0, callback_dcc_recv_file);
 
+    FileHelper::init_write(dccid, filename);
+    m_fileCatalog[dccid] = QString(filename);
+}
+
+
+void IrcHelper::OnFileRcvd(irc_session_t * session, irc_dcc_t id, int status, void * ctx, const char * data, unsigned int length)
+{
+    //qDebug() << "event_connect: status " << QString::number(status) << ", length: " << QString::number(length);
+    if ( status )
+    {
+	FileHelper::end_write(id);
+	IrcHelper::getInstance()->ProtocolMessageBox();
+	qDebug() << "Received status " << QString::number(status);
+	m_bSearching = false;
+    }
+    else if ( data == 0 )
+    {
+	// File transfer has been finished
+	qDebug() << "File has been received successfully";
+	FileHelper::end_write(id);
+	if (m_bSearching)
+	    OnSearchResults(id);
+    }
+    else
+    {
+	// More file content has been received. Store it in memory, write to disk or something
+	printf ("Received %d bytes of data\n", length );
+	FileHelper::write_buffer(id, data, length);
+    }
+}
+
+void IrcHelper::OnSearchResults(irc_dcc_t dccid)
+{
+    QString filename = m_fileCatalog[dccid];
+    if (m_fileCatalog.find(dccid) == m_fileCatalog.end())
+	return;
+
+    qDebug() << "Search results stored in file " << filename;
+
+}
 
 void IrcHelper::OnConnected()
 {
@@ -114,6 +140,7 @@ void IrcHelper::searchString(QString str)
 {
     if (irc_cmd_msg(m_session, m_channel.toUtf8(), "@search "+str.toUtf8()))
 	ProtocolMessageBox();
+    m_bSearching=true;
 }
 
 void IrcHelper::run()

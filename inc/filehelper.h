@@ -9,16 +9,17 @@
 #define FILEHELPER_H
 
 #include <fstream>
+#include <map>
 
 class FileHelper
 {
     public:
-	static bool init_write(const char* filename);
-	static bool write_buffer(const char* data, int length);
-	static bool end_write();
+	static bool init_write(uint dccid, const char* filename);
+	static bool write_buffer(uint dccid, const char* data, int length);
+	static bool end_write(uint dccid);
 
     private:
-	static FILE *m_file;
+	static std::map<uint, FILE*> m_files;
 
 };
 #endif /* !FILEHELPER_H */

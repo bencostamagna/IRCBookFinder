@@ -7,28 +7,34 @@
 
 #include "filehelper.h"
 
-FILE* FileHelper::m_file = NULL;
+std::map<uint, FILE*> FileHelper::m_files;
 
-bool FileHelper::init_write(const char* filename)
+bool FileHelper::init_write(uint dccid, const char* filename)
 {
-    m_file = fopen (filename, "w");
-
-    if (!m_file)
+    if (m_files.find(dccid) != m_files.end())
 	return false;
+    FILE* file = fopen (filename, "w");
+    
+    if (!file)
+	return false;
+
+    m_files[dccid] = file;
     return true;
 }
 
-bool FileHelper::end_write()
+bool FileHelper::end_write(uint dccid)
 {
-    fclose(m_file);
-    m_file=NULL;
+    if (m_files.find(dccid) == m_files.end())
+	return false;
+    fclose(m_files[dccid]);
+    m_files.erase(dccid);
     return true;
 }
 
-bool FileHelper::write_buffer(const char* data, int length)
+bool FileHelper::write_buffer(uint dccid, const char* data, int length)
 {
-    if (!m_file)
+    if (!m_files[dccid])
 	return false;
-    fwrite(data, sizeof(char), length, m_file);
+    fwrite(data, sizeof(char), length, m_files[dccid]);
     return true;
 }

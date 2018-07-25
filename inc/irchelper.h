@@ -27,8 +27,9 @@ class IrcHelper: public QThread
 	void setServerData(QString server, int port, QString nick, QString channel);
 
 	void OnConnected();
-	void OnFileRcvd(irc_dcc_t dccid);
-
+	void OnFileTransfer(irc_session_t* session, const char* nick, const char* addr, const char* filename, unsigned long size, irc_dcc_t dccid);
+	void OnFileRcvd(irc_session_t * session, irc_dcc_t id, int status, void * ctx, const char * data, unsigned int length);
+	void OnSearchResults(irc_dcc_t dccid);
 
     signals:
 	void sig_connected();
@@ -45,6 +46,11 @@ class IrcHelper: public QThread
 	int m_port;
 	QString m_nick;
 	QString m_channel;
+
+	std::map<irc_dcc_t, QString> m_fileCatalog;
+
+	bool m_bSearching;
+	bool m_bDownloading;
 };
 
 #endif /* !IRCHELPER_H */
