@@ -98,8 +98,9 @@ void IrcHelper::OnFileRcvd(irc_session_t * session, irc_dcc_t id, int status, vo
     if ( status )
     {
 	FileHelper::end_write(id);
-	IrcHelper::getInstance()->ProtocolMessageBox();
-	qDebug() << "Received status " << QString::number(status);
+	//IrcHelper::getInstance()->ProtocolMessageBox();
+	
+	qDebug() << "Received status " << QString::number(status) << ": " << irc_strerror(status);
 	m_bSearching = false;
     }
     else if ( data == 0 )
@@ -125,7 +126,21 @@ void IrcHelper::OnSearchResults(irc_dcc_t dccid)
 	return;
 
     qDebug() << "Search results stored in file " << filename;
+    QString content;
+    FileHelper::extract_zip(filename, content);
 
+    QStringList list = content.split('\n', QString::SkipEmptyParts);
+
+    QMutableListIterator<QString> i(list);
+    while (i.hasNext())
+    {
+	QString buf = i.next();
+	if (buf[0] != '!')
+	    i.remove();
+    }
+
+    qDebug() << "there are " << list.size() << " lines of actual content";
+    emit sig_searchResults(list);
 }
 
 void IrcHelper::OnConnected()

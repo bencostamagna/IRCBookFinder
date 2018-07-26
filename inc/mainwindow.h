@@ -11,6 +11,8 @@
 #include <QWidget>
 #include <QPushButton>
 #include <QTextEdit>
+#include <QListWidget>
+#include <QStringList>
 
 #include "irchelper.h"
 
@@ -19,6 +21,7 @@
 
 #define WINDOW_MARGIN	30
 #define LINE_HEIGHT 	50
+#define LINE_OFFSET	75
 
 #define BUTTON_WIDTH   	150
 
@@ -29,8 +32,6 @@ class MainWindow : public QWidget
 	explicit MainWindow(QWidget *parent = 0);
 	virtual ~ MainWindow();
 
-    private:
-	void setStatus(QString status);
     signals:
 	void sig_search(QString str);
 
@@ -40,6 +41,9 @@ class MainWindow : public QWidget
 
 	void OnConnected();
 	void OnDisconnected();
+
+	void OnSearchResults(QStringList results);
+	void setStatus(QString status);
     private:
 	    QPushButton 	*m_buttonSearch;
 	    QTextEdit 		*m_textSearch;
@@ -47,6 +51,7 @@ class MainWindow : public QWidget
 	    QPushButton 	*m_buttonConnect;
 	    QTextEdit 		*m_textStatus;
 
+	    QListWidget 	*m_listWidget;
 	    IrcHelper 		*m_worker;
 };
 

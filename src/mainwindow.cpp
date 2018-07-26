@@ -8,6 +8,7 @@
 #include "mainwindow.h"
 
 #include <QMessageBox>
+#include <QDebug>
 
 MainWindow::MainWindow(QWidget *parent)
     :QWidget(parent)
@@ -16,12 +17,12 @@ MainWindow::MainWindow(QWidget *parent)
 
 
     m_buttonSearch = new QPushButton("Search", this);
-    m_buttonSearch->setGeometry(600, 100+WINDOW_MARGIN, BUTTON_WIDTH, LINE_HEIGHT); 
+    m_buttonSearch->setGeometry(600, LINE_OFFSET+WINDOW_MARGIN, BUTTON_WIDTH, LINE_HEIGHT); 
     connect(m_buttonSearch, SIGNAL (released()), this, SLOT (OnSearchButton()));
     m_buttonSearch->setEnabled(false);
 
     m_textSearch = new QTextEdit(this);
-    m_textSearch->setGeometry(WINDOW_MARGIN, 100+WINDOW_MARGIN, 500, LINE_HEIGHT);
+    m_textSearch->setGeometry(WINDOW_MARGIN, LINE_OFFSET+WINDOW_MARGIN, 500, LINE_HEIGHT);
 
     m_buttonConnect = new QPushButton("Connect", this);
     m_buttonConnect->setGeometry(600, WINDOW_MARGIN, BUTTON_WIDTH, LINE_HEIGHT); 
@@ -32,12 +33,15 @@ MainWindow::MainWindow(QWidget *parent)
     m_textStatus->setEnabled(false);
     setStatus("Disconnected");
     
+    m_listWidget = new QListWidget(this);
+    m_listWidget->setGeometry(WINDOW_MARGIN, 2*LINE_OFFSET+WINDOW_MARGIN, 500, 400);
 
     m_worker = IrcHelper::getInstance();
     //m_worker->setServerData("chat.freenode.net", 6667, "chupacabot", "#chupacabratest");
     m_worker->setServerData("eu.undernet.org", 6667, "chupacabot", "#bookz");
     connect(m_worker, SIGNAL(sig_connected()), this, SLOT(OnConnected()));
     connect(this, SIGNAL(sig_search(QString)), m_worker, SLOT(searchString(QString)));
+    connect(m_worker, SIGNAL(sig_searchResults(QStringList)), this, SLOT(OnSearchResults(QStringList)));
 }
 
 
@@ -78,6 +82,13 @@ void MainWindow::OnConnect()
 }
 
 
+void MainWindow::OnSearchResults(QStringList results)
+{
+    setStatus("Connected");
+    m_listWidget->clear();
+    m_listWidget->addItems(results);
+}
+
 void MainWindow::OnSearchButton()
 {
     QString pattern = m_textSearch->toPlainText();
@@ -89,6 +100,7 @@ void MainWindow::OnSearchButton()
     }
     else
     {
+	setStatus("Searching...");
 	emit sig_search(pattern);
     }
 }

@@ -21,7 +21,7 @@ qt5_wrap_cpp(f_moc_inc ${f_inc})
 add_executable(${EXE_NAME} ${f_src} ${f_moc_inc}) 
 qt5_use_modules(${EXE_NAME} Widgets)
 
-target_link_libraries(${EXE_NAME} libircclient.so)
+target_link_libraries(${EXE_NAME} libircclient.so libzip.so)
 
 # generates the compilation database for YouCompleteMe to use
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)

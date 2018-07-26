@@ -11,6 +11,8 @@
 #include <fstream>
 #include <map>
 
+#include <QString>
+
 class FileHelper
 {
     public:
@@ -18,6 +20,7 @@ class FileHelper
 	static bool write_buffer(uint dccid, const char* data, int length);
 	static bool end_write(uint dccid);
 
+	static bool extract_zip(QString filename, QString &content);
     private:
 	static std::map<uint, FILE*> m_files;
 

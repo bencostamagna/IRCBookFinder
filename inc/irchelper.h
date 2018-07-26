@@ -12,6 +12,7 @@
 #include "libirc_rfcnumeric.h"
 
 #include <QString>
+#include <QStringList>
 #include <QThread>
 #include <map>
 
@@ -33,6 +34,7 @@ class IrcHelper: public QThread
 
     signals:
 	void sig_connected();
+	void sig_searchResults(QStringList);
 
     public slots:
 	void searchString(QString str);
