@@ -38,12 +38,14 @@ class MainWindow : public QWidget
     private slots:
 	void OnSearchButton();
 	void OnConnect();
+	void OnDownload();
 
 	void OnConnected();
 	void OnDisconnected();
 
 	void OnSearchResults(QStringList results);
 	void setStatus(QString status);
+	void OnSelectionChanged();
     private:
 	    QPushButton 	*m_buttonSearch;
 	    QTextEdit 		*m_textSearch;
@@ -51,6 +53,8 @@ class MainWindow : public QWidget
 	    QPushButton 	*m_buttonConnect;
 	    QTextEdit 		*m_textStatus;
 
+	    QPushButton 	*m_buttonDownload;
+	    
 	    QListWidget 	*m_listWidget;
 	    IrcHelper 		*m_worker;
 };

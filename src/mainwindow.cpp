@@ -33,6 +33,11 @@ MainWindow::MainWindow(QWidget *parent)
     m_textStatus->setEnabled(false);
     setStatus("Disconnected");
     
+    m_buttonDownload = new QPushButton("Download", this);
+    m_buttonDownload->setGeometry(600, 2*LINE_OFFSET+WINDOW_MARGIN, BUTTON_WIDTH, LINE_HEIGHT);
+    connect(m_buttonDownload, SIGNAL(released()), this, SLOT(OnDownload()));
+    m_buttonDownload->setEnabled(false);
+
     m_listWidget = new QListWidget(this);
     m_listWidget->setGeometry(WINDOW_MARGIN, 2*LINE_OFFSET+WINDOW_MARGIN, 500, 400);
 
@@ -42,6 +47,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(m_worker, SIGNAL(sig_connected()), this, SLOT(OnConnected()));
     connect(this, SIGNAL(sig_search(QString)), m_worker, SLOT(searchString(QString)));
     connect(m_worker, SIGNAL(sig_searchResults(QStringList)), this, SLOT(OnSearchResults(QStringList)));
+    connect(m_listWidget, SIGNAL(itemSelectionChanged()), this, SLOT(OnSelectionChanged()));
 }
 
 
@@ -51,8 +57,17 @@ MainWindow::~MainWindow()
     delete m_textSearch;
 
     delete m_buttonConnect;
-    
-    delete m_worker;
+    delete m_textStatus;
+
+    delete m_buttonDownload;
+    delete m_listWidget;
+
+    if (m_worker->isRunning())
+    {
+	m_worker->terminate();
+	for ( int c = 0; c < 20 && m_worker->isRunning(); ++c)
+	    QThread::sleep(1);
+    }
 }
 
 void MainWindow::setStatus(QString status)
@@ -81,6 +96,22 @@ void MainWindow::OnConnect()
     setStatus("Connecting...");
 }
 
+void MainWindow::OnDownload()
+{
+    
+    if (m_listWidget->selectedItems().count() == 0)
+    {
+	QMessageBox msgBox;
+        msgBox.setText("No item selected");
+	msgBox.exec();
+    }
+    else
+    {
+	QMessageBox msgBox;
+        msgBox.setText("Downloading"+m_listWidget->selectedItems().first()->text());
+	msgBox.exec();
+    }
+}
 
 void MainWindow::OnSearchResults(QStringList results)
 {
@@ -104,4 +135,19 @@ void MainWindow::OnSearchButton()
 	emit sig_search(pattern);
     }
 }
+
+void MainWindow::OnSelectionChanged()
+{
+    if (m_listWidget->selectedItems().count() == 0)
+    {
+	qDebug() << "No selection";
+	m_buttonDownload->setEnabled(false);
+    }
+    else
+    {
+	qDebug() << "Selection changed to" << m_listWidget->selectedItems().first()->text();
+	m_buttonDownload->setEnabled(true);
+    }
+}
+
 

@@ -38,6 +38,7 @@ class IrcHelper: public QThread
 
     public slots:
 	void searchString(QString str);
+	void disconnect();
 
     private:
 	IrcHelper();

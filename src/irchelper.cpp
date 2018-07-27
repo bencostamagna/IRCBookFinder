@@ -71,6 +71,10 @@ void callback_event_dcc_file(irc_session_t* session, const char* nick, const cha
 //dummy event_numeric
 void event_numeric(irc_session_t * session, unsigned int event, const char * origin, const char ** params, unsigned int count)
 {
+    QString str =  "event_numeric: "+QString::number(event);
+    for (uint i = 0; i < count; ++i)
+	str += " | "+QString(params[i]);
+    qDebug() << str;
 }
 
 
@@ -158,6 +162,12 @@ void IrcHelper::searchString(QString str)
     m_bSearching=true;
 }
 
+void IrcHelper::disconnect()
+{
+    qDebug() << "disconnect signal received";
+    irc_disconnect(m_session);
+}
+
 void IrcHelper::run()
 {
     // The IRC callbacks structure
@@ -193,6 +203,7 @@ void IrcHelper::run()
 	ProtocolMessageBox();
 	return;
     }
+    qDebug() << "disconnected.";
 }
 
 
