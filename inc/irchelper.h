@@ -31,6 +31,7 @@ class IrcHelper: public QThread
 	void OnFileTransfer(irc_session_t* session, const char* nick, const char* addr, const char* filename, unsigned long size, irc_dcc_t dccid);
 	void OnFileRcvd(irc_session_t * session, irc_dcc_t id, int status, void * ctx, const char * data, unsigned int length);
 	void OnSearchResults(irc_dcc_t dccid);
+	void OnBookDownloadComplete(irc_dcc_t dccid);
 
     signals:
 	void sig_connected();
@@ -38,6 +39,7 @@ class IrcHelper: public QThread
 
     public slots:
 	void searchString(QString str);
+	void launchDownload(QString str);
 	void disconnect();
 
     private:

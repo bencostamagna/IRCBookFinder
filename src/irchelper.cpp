@@ -106,6 +106,7 @@ void IrcHelper::OnFileRcvd(irc_session_t * session, irc_dcc_t id, int status, vo
 	
 	qDebug() << "Received status " << QString::number(status) << ": " << irc_strerror(status);
 	m_bSearching = false;
+	m_bDownloading = false;
     }
     else if ( data == 0 )
     {
@@ -114,6 +115,8 @@ void IrcHelper::OnFileRcvd(irc_session_t * session, irc_dcc_t id, int status, vo
 	FileHelper::end_write(id);
 	if (m_bSearching)
 	    OnSearchResults(id);
+	else if (m_bDownloading)
+	    OnBookDownloadComplete(id);
     }
     else
     {
@@ -122,6 +125,17 @@ void IrcHelper::OnFileRcvd(irc_session_t * session, irc_dcc_t id, int status, vo
 	FileHelper::write_buffer(id, data, length);
     }
 }
+
+
+void IrcHelper::OnBookDownloadComplete(irc_dcc_t dccid)
+{
+    QString filename = m_fileCatalog[dccid];
+    if (m_fileCatalog.find(dccid) == m_fileCatalog.end())
+	return;
+    qDebug() << "Download complete to file " << filename;
+    m_bDownloading = false;
+}
+
 
 void IrcHelper::OnSearchResults(irc_dcc_t dccid)
 {
@@ -144,6 +158,7 @@ void IrcHelper::OnSearchResults(irc_dcc_t dccid)
     }
 
     qDebug() << "there are " << list.size() << " lines of actual content";
+    m_bSearching = false;
     emit sig_searchResults(list);
 }
 
@@ -160,6 +175,13 @@ void IrcHelper::searchString(QString str)
     if (irc_cmd_msg(m_session, m_channel.toUtf8(), "@search "+str.toUtf8()))
 	ProtocolMessageBox();
     m_bSearching=true;
+}
+
+void IrcHelper::launchDownload(QString str)
+{
+    if (irc_cmd_msg(m_session, m_channel.toUtf8(), str.toUtf8()))
+	ProtocolMessageBox();
+    m_bDownloading=true;
 }
 
 void IrcHelper::disconnect()

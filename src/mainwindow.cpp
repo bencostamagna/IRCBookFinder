@@ -45,7 +45,6 @@ MainWindow::MainWindow(QWidget *parent)
     //m_worker->setServerData("chat.freenode.net", 6667, "chupacabot", "#chupacabratest");
     m_worker->setServerData("eu.undernet.org", 6667, "chupacabot", "#bookz");
     connect(m_worker, SIGNAL(sig_connected()), this, SLOT(OnConnected()));
-    connect(this, SIGNAL(sig_search(QString)), m_worker, SLOT(searchString(QString)));
     connect(m_worker, SIGNAL(sig_searchResults(QStringList)), this, SLOT(OnSearchResults(QStringList)));
     connect(m_listWidget, SIGNAL(itemSelectionChanged()), this, SLOT(OnSelectionChanged()));
 }
@@ -108,8 +107,9 @@ void MainWindow::OnDownload()
     else
     {
 	QMessageBox msgBox;
-        msgBox.setText("Downloading"+m_listWidget->selectedItems().first()->text());
+	msgBox.setText("Downloading"+m_listWidget->selectedItems().first()->text());
 	msgBox.exec();
+	//m_worker->launchDownload(m_listWidget->selectedItems().first()->text());
     }
 }
 
@@ -132,7 +132,7 @@ void MainWindow::OnSearchButton()
     else
     {
 	setStatus("Searching...");
-	emit sig_search(pattern);
+	m_worker->searchString(pattern);
     }
 }
 

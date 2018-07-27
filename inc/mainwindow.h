@@ -32,9 +32,6 @@ class MainWindow : public QWidget
 	explicit MainWindow(QWidget *parent = 0);
 	virtual ~ MainWindow();
 
-    signals:
-	void sig_search(QString str);
-
     private slots:
 	void OnSearchButton();
 	void OnConnect();
