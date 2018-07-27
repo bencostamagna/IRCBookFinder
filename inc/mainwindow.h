@@ -37,12 +37,12 @@ class MainWindow : public QWidget
 	void OnConnect();
 	void OnDownload();
 
-	void OnConnected();
-	void OnDisconnected();
+	void OnConnected(bool isConnected);
 
 	void OnSearchResults(QStringList results);
 	void setStatus(QString status);
 	void OnSelectionChanged();
+    
     private:
 	    QPushButton 	*m_buttonSearch;
 	    QTextEdit 		*m_textSearch;

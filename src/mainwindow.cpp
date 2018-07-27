@@ -44,9 +44,10 @@ MainWindow::MainWindow(QWidget *parent)
     m_worker = IrcHelper::getInstance();
     //m_worker->setServerData("chat.freenode.net", 6667, "chupacabot", "#chupacabratest");
     m_worker->setServerData("eu.undernet.org", 6667, "chupacabot", "#bookz");
-    connect(m_worker, SIGNAL(sig_connected()), this, SLOT(OnConnected()));
+    connect(m_worker, SIGNAL(sig_connected(bool)), this, SLOT(OnConnected(bool)));
     connect(m_worker, SIGNAL(sig_searchResults(QStringList)), this, SLOT(OnSearchResults(QStringList)));
     connect(m_listWidget, SIGNAL(itemSelectionChanged()), this, SLOT(OnSelectionChanged()));
+    connect(m_worker, SIGNAL(sig_status(QString)), this, SLOT(setStatus(QString)));
 }
 
 
@@ -75,22 +76,17 @@ void MainWindow::setStatus(QString status)
 }
 
 
-void MainWindow::OnConnected()
+void MainWindow::OnConnected(bool is_connected)
 {
-    m_buttonSearch->setEnabled(true);
-    m_buttonConnect->setEnabled(false);
-    setStatus("Connected");
+    m_buttonSearch->setEnabled(is_connected);
+    m_buttonConnect->setEnabled(!is_connected);
+    setStatus((is_connected)?"Connected":"Disconnected");
 }
 
-void MainWindow::OnDisconnected()
-{
-    m_buttonSearch->setEnabled(false);
-    m_buttonConnect->setEnabled(true);
-    setStatus("Disconnected");
-}
 
 void MainWindow::OnConnect()
 {
+    m_buttonConnect->setEnabled(false);
     m_worker->start();
     setStatus("Connecting...");
 }

@@ -16,6 +16,8 @@
 #include <QThread>
 #include <map>
 
+#define IRC_TIMEOUT 30
+
 class IrcHelper: public QThread
 {
     Q_OBJECT
@@ -34,8 +36,9 @@ class IrcHelper: public QThread
 	void OnBookDownloadComplete(irc_dcc_t dccid);
 
     signals:
-	void sig_connected();
+	void sig_connected(bool);
 	void sig_searchResults(QStringList);
+	void sig_status(QString status);
 
     public slots:
 	void searchString(QString str);

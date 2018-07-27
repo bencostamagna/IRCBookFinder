@@ -107,6 +107,7 @@ void IrcHelper::OnFileRcvd(irc_session_t * session, irc_dcc_t id, int status, vo
 	qDebug() << "Received status " << QString::number(status) << ": " << irc_strerror(status);
 	m_bSearching = false;
 	m_bDownloading = false;
+	emit sig_status("Connected");
     }
     else if ( data == 0 )
     {
@@ -166,7 +167,7 @@ void IrcHelper::OnConnected()
 {
     if (irc_cmd_join(m_session, m_channel.toUtf8(), 0 ))
 	ProtocolMessageBox();
-    emit sig_connected();
+    emit sig_connected(true);
 }
 
 
@@ -188,6 +189,7 @@ void IrcHelper::disconnect()
 {
     qDebug() << "disconnect signal received";
     irc_disconnect(m_session);
+    emit sig_connected(false);
 }
 
 void IrcHelper::run()
@@ -207,15 +209,9 @@ void IrcHelper::run()
     // Now create the m_session
     m_session = irc_create_session(&callbacks);
 
-    if (!m_session)
+    if (!m_session || irc_connect(m_session, m_server.toUtf8(), m_port, 0, m_nick.toUtf8(), m_nick.toUtf8(), m_nick.toUtf8()))
     {
-	ProtocolMessageBox();
-	return;
-    }
-
-    // Connect to a regular IRC server
-    if (irc_connect(m_session, m_server.toUtf8(), m_port, 0, m_nick.toUtf8(), m_nick.toUtf8(), m_nick.toUtf8()))
-    {
+	emit sig_connected(false);
 	ProtocolMessageBox();
 	return;
     }
