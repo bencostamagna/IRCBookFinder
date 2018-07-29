@@ -102,10 +102,10 @@ void MainWindow::OnDownload()
     }
     else
     {
-	QMessageBox msgBox;
-	msgBox.setText("Downloading"+m_listWidget->selectedItems().first()->text());
-	msgBox.exec();
-	//m_worker->launchDownload(m_listWidget->selectedItems().first()->text());
+	//QMessageBox msgBox;
+	//msgBox.setText("Downloading"+m_listWidget->selectedItems().first()->text());
+	//msgBox.exec();
+	m_worker->launchDownload(m_listWidget->selectedItems().first()->text());
     }
 }
 

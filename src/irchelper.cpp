@@ -158,7 +158,7 @@ void IrcHelper::OnSearchResults(irc_dcc_t dccid)
 	    i.remove();
     }
 
-    qDebug() << "there are " << list.size() << " lines of actual content";
+    qDebug() << "there are " << list.size() << " results";
     m_bSearching = false;
     emit sig_searchResults(list);
 }
@@ -180,7 +180,9 @@ void IrcHelper::searchString(QString str)
 
 void IrcHelper::launchDownload(QString str)
 {
-    if (irc_cmd_msg(m_session, m_channel.toUtf8(), str.toUtf8()))
+    QString msg = str.split("::").first().trimmed();
+    qDebug() << "Sending: " << msg;
+    if (irc_cmd_msg(m_session, m_channel.toUtf8(), msg.toUtf8()))
 	ProtocolMessageBox();
     m_bDownloading=true;
 }
