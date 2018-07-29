@@ -10,7 +10,7 @@
 
 #include <QWidget>
 #include <QPushButton>
-#include <QTextEdit>
+#include <QLineEdit>
 #include <QListWidget>
 #include <QStringList>
 
@@ -38,6 +38,7 @@ class MainWindow : public QWidget
 	void OnDownload();
 
 	void OnConnected(bool isConnected);
+	void OnSearchInput(const QString& txt);
 
 	void OnSearchResults(QStringList results);
 	void setStatus(QString status);
@@ -45,10 +46,10 @@ class MainWindow : public QWidget
     
     private:
 	    QPushButton 	*m_buttonSearch;
-	    QTextEdit 		*m_textSearch;
+	    QLineEdit 		*m_textSearch;
 
 	    QPushButton 	*m_buttonConnect;
-	    QTextEdit 		*m_textStatus;
+	    QLineEdit 		*m_textStatus;
 
 	    QPushButton 	*m_buttonDownload;
 	    

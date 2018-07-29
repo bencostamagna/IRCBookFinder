@@ -17,7 +17,9 @@
 IrcHelper::IrcHelper()
     :	m_bSearching{false},
 	m_bDownloading{false}
-{}
+{
+    m_session=NULL;
+}
 
 IrcHelper::~IrcHelper()
 {}
@@ -98,7 +100,6 @@ void IrcHelper::OnFileTransfer(irc_session_t* session, const char* nick, const c
 
 void IrcHelper::OnFileRcvd(irc_session_t * session, irc_dcc_t id, int status, void * ctx, const char * data, unsigned int length)
 {
-    //qDebug() << "event_connect: status " << QString::number(status) << ", length: " << QString::number(length);
     if ( status )
     {
 	FileHelper::end_write(id);
@@ -111,7 +112,6 @@ void IrcHelper::OnFileRcvd(irc_session_t * session, irc_dcc_t id, int status, vo
     }
     else if ( data == 0 )
     {
-	// File transfer has been finished
 	qDebug() << "File has been received successfully";
 	FileHelper::end_write(id);
 	if (m_bSearching)
@@ -121,10 +121,10 @@ void IrcHelper::OnFileRcvd(irc_session_t * session, irc_dcc_t id, int status, vo
     }
     else
     {
-	// More file content has been received. Store it in memory, write to disk or something
-	printf ("Received %d bytes of data\n", length );
+	qDebug() <<"Received " << QString::number(length) << " bytes of data";
 	FileHelper::write_buffer(id, data, length);
     }
+    qDebug() << "OK";
 }
 
 
@@ -192,6 +192,13 @@ void IrcHelper::disconnect()
     qDebug() << "disconnect signal received";
     irc_disconnect(m_session);
     emit sig_connected(false);
+}
+
+bool IrcHelper::isConnected()
+{
+    if (!m_session)
+	return false;
+    return irc_is_connected(m_session);
 }
 
 void IrcHelper::run()

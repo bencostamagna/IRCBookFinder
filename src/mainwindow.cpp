@@ -21,14 +21,17 @@ MainWindow::MainWindow(QWidget *parent)
     connect(m_buttonSearch, SIGNAL (released()), this, SLOT (OnSearchButton()));
     m_buttonSearch->setEnabled(false);
 
-    m_textSearch = new QTextEdit(this);
+    m_textSearch = new QLineEdit(this);
     m_textSearch->setGeometry(WINDOW_MARGIN, LINE_OFFSET+WINDOW_MARGIN, 500, LINE_HEIGHT);
+    connect(m_textSearch, SIGNAL(returnPressed()), this, SLOT(OnSearchButton()));
+    connect(m_textSearch, SIGNAL(textChanged(const QString&)), this, SLOT(OnSearchInput(const QString&)));
+    m_textSearch->setEnabled(true);
 
     m_buttonConnect = new QPushButton("Connect", this);
     m_buttonConnect->setGeometry(600, WINDOW_MARGIN, BUTTON_WIDTH, LINE_HEIGHT); 
     connect(m_buttonConnect, SIGNAL (released()), this, SLOT (OnConnect()));
     
-    m_textStatus= new QTextEdit(this);
+    m_textStatus= new QLineEdit(this);
     m_textStatus->setGeometry(WINDOW_MARGIN, WINDOW_MARGIN, 500, LINE_HEIGHT);
     m_textStatus->setEnabled(false);
     setStatus("Disconnected");
@@ -78,9 +81,17 @@ void MainWindow::setStatus(QString status)
 
 void MainWindow::OnConnected(bool is_connected)
 {
-    m_buttonSearch->setEnabled(is_connected);
+    //m_buttonSearch->setEnabled(is_connected);
     m_buttonConnect->setEnabled(!is_connected);
     setStatus((is_connected)?"Connected":"Disconnected");
+}
+
+void MainWindow::OnSearchInput(const QString& txt)
+{
+    if (txt.length() > 0 && m_worker->isRunning() && m_worker->isConnected())
+	m_buttonSearch->setEnabled(true);
+    else
+	m_buttonSearch->setEnabled(false);
 }
 
 
@@ -118,7 +129,13 @@ void MainWindow::OnSearchResults(QStringList results)
 
 void MainWindow::OnSearchButton()
 {
-    QString pattern = m_textSearch->toPlainText();
+    if (!m_worker->isRunning() || !m_worker->isConnected())
+    {
+	qDebug() << "worker not running";
+	return;
+    }
+
+    QString pattern = m_textSearch->text();
     if (pattern.length() == 0)
     {
 	QMessageBox msgBox;
@@ -127,6 +144,7 @@ void MainWindow::OnSearchButton()
     }
     else
     {
+	m_listWidget->clear();
 	setStatus("Searching...");
 	m_worker->searchString(pattern);
     }

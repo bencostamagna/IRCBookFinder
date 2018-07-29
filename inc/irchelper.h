@@ -26,6 +26,7 @@ class IrcHelper: public QThread
 	~IrcHelper();
 
 	void run();
+	bool isConnected();
 	void ProtocolMessageBox();
 	void setServerData(QString server, int port, QString nick, QString channel);
 
