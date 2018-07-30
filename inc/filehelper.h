@@ -13,6 +13,18 @@
 
 #include <QString>
 
+class FileInfo
+{
+    public:
+	FileInfo() {}
+	FileInfo(QString f, unsigned long s);
+
+	QString filename;
+	unsigned long size;
+	unsigned long received;
+};
+
+
 class FileHelper
 {
     public:

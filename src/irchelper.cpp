@@ -7,7 +7,6 @@
 
 #include "irchelper.h"
 
-#include "filehelper.h"
 
 #include <cstring>
 #include <QDebug>
@@ -94,7 +93,7 @@ void IrcHelper::OnFileTransfer(irc_session_t* session, const char* nick, const c
     irc_dcc_accept(session, dccid, 0, callback_dcc_recv_file);
 
     FileHelper::init_write(dccid, filename);
-    m_fileCatalog[dccid] = QString(filename);
+    m_fileCatalog[dccid] = FileInfo(QString(filename), size);
 }
 
 
@@ -121,16 +120,16 @@ void IrcHelper::OnFileRcvd(irc_session_t * session, irc_dcc_t id, int status, vo
     }
     else
     {
-	qDebug() <<"Received " << QString::number(length) << " bytes of data";
+	m_fileCatalog[id].received += length;
+	qDebug() <<"Received " << QString::number(length) << " bytes of data, Progress: " << QString::number(m_fileCatalog[id].received*100 / m_fileCatalog[id].size) << "%";
 	FileHelper::write_buffer(id, data, length);
     }
-    qDebug() << "OK";
 }
 
 
 void IrcHelper::OnBookDownloadComplete(irc_dcc_t dccid)
 {
-    QString filename = m_fileCatalog[dccid];
+    QString filename = m_fileCatalog[dccid].filename;
     if (m_fileCatalog.find(dccid) == m_fileCatalog.end())
 	return;
     qDebug() << "Download complete to file " << filename;
@@ -140,7 +139,7 @@ void IrcHelper::OnBookDownloadComplete(irc_dcc_t dccid)
 
 void IrcHelper::OnSearchResults(irc_dcc_t dccid)
 {
-    QString filename = m_fileCatalog[dccid];
+    QString filename = m_fileCatalog[dccid].filename;
     if (m_fileCatalog.find(dccid) == m_fileCatalog.end())
 	return;
 
@@ -175,6 +174,7 @@ void IrcHelper::searchString(QString str)
 {
     if (irc_cmd_msg(m_session, m_channel.toUtf8(), "@search "+str.toUtf8()))
 	ProtocolMessageBox();
+    qDebug() << "Searching " << str;
     m_bSearching=true;
 }
 

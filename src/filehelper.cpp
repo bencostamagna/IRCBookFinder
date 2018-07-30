@@ -72,3 +72,9 @@ bool FileHelper::extract_zip(QString filename, QString &content)
     return true;
 }
 
+FileInfo::FileInfo(QString f, unsigned long s)
+    :	filename {f},
+	size{s},
+	received {0}
+{}
+

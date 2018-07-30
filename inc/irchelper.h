@@ -16,6 +16,8 @@
 #include <QThread>
 #include <map>
 
+#include "filehelper.h"
+
 #define IRC_TIMEOUT 30
 
 class IrcHelper: public QThread
@@ -56,7 +58,7 @@ class IrcHelper: public QThread
 	QString m_nick;
 	QString m_channel;
 
-	std::map<irc_dcc_t, QString> m_fileCatalog;
+	std::map<irc_dcc_t, FileInfo> m_fileCatalog;
 
 	bool m_bSearching;
 	bool m_bDownloading;
