@@ -14,7 +14,8 @@
 
 	    //("chat.freenode.net", 6667, "chupacabot", "#chupacabratest");
 IrcHelper::IrcHelper()
-    :	m_bSearching{false},
+    :	m_bConnected{false},
+    	m_bSearching{false},
 	m_bDownloading{false}
 {
     m_session=NULL;
@@ -41,8 +42,14 @@ void IrcHelper::updateUserList(QStringList l)
 {
     QStringListIterator it (l);
     while (it.hasNext())
-	m_chanInfo.users.append(it.next());
+    {
+	QString u = it.next();
+	if (u[0] == '@' || u[0] == '+')
+	    u.remove(0, 1);
+	m_chanInfo.users.append(u);
+    }
 }
+
 
 void event_connect(irc_session_t * session, const char * event, const char * origin, const char ** params, unsigned int count)
 {
@@ -55,9 +62,7 @@ void event_connect(irc_session_t * session, const char * event, const char * ori
     str_params+="|";
     qDebug() << "event_connect: event " << QString(event) << ", origin: " << QString(origin) << ", params: " << str_params;
 
-
-
-    IrcHelper::getInstance()->OnConnected();
+	IrcHelper::getInstance()->OnConnected();
 }
 
 
@@ -104,6 +109,10 @@ void event_numeric(irc_session_t * session, unsigned int event, const char * ori
     if (event == 353)
     {
 	IrcHelper::getInstance()->updateUserList(QString(params[count-1]).split(" "));;
+    }
+    else if (event == 366)
+    {
+	IrcHelper::getInstance()->OnChannelJoined();
     }
     else
     {
@@ -200,20 +209,37 @@ void IrcHelper::OnSearchResults(irc_dcc_t dccid)
     emit sig_searchResults(list);
 }
 
+
+void IrcHelper::OnChannelJoined()
+{
+    QListIterator<QString> i(m_chanInfo.users);
+    while (i.hasNext())
+	qDebug() << i.next();
+    if (m_chanInfo.users.indexOf(QRegExp("SearchOok")) != -1)
+    {
+	qDebug() << "Search bot online";
+	m_bConnected = true;
+    }
+    else
+    {
+	qDebug() << "Search bot offline";
+	QMessageBox msg;
+	msg.setText("Search bot is offline");
+	msg.show();
+    }
+    emit sig_connected(true);
+}
+
+
 void IrcHelper::OnConnected()
 {
     if (irc_cmd_join(m_session, m_chanInfo.channel.toUtf8(), 0 ))
 	ProtocolMessageBox();
-    emit sig_connected(true);
 }
 
 
 void IrcHelper::searchString(QString str)
 {
-    //QStringListIterator it (m_chanInfo.users);
-    //qDebug() << "User list: ";
-    //while (it.hasNext())
-	//qDebug() << it.next();
     if (irc_cmd_msg(m_session, m_chanInfo.channel.toUtf8(), "@search "+str.toUtf8()))
 	ProtocolMessageBox();
     qDebug() << "Searching " << str;
@@ -240,7 +266,7 @@ bool IrcHelper::isConnected()
 {
     if (!m_session)
 	return false;
-    return irc_is_connected(m_session);
+    return irc_is_connected(m_session) && m_bConnected;
 }
 
 void IrcHelper::run()

@@ -46,6 +46,7 @@ class IrcHelper: public QThread
 	void updateUserList(QStringList l);
 
 	void OnConnected();
+	void OnChannelJoined();
 	void OnFileTransfer(irc_session_t* session, const char* nick, const char* addr, const char* filename, unsigned long size, irc_dcc_t dccid);
 	void OnFileRcvd(irc_session_t * session, irc_dcc_t id, int status, void * ctx, const char * data, unsigned int length);
 	void OnSearchResults(irc_dcc_t dccid);
@@ -70,6 +71,7 @@ class IrcHelper: public QThread
 
 	std::map<irc_dcc_t, FileInfo> m_fileCatalog;
 
+	bool m_bConnected;
 	bool m_bSearching;
 	bool m_bDownloading;
 };
