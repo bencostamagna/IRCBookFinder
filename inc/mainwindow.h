@@ -40,7 +40,7 @@ class MainWindow : public QWidget
 	void OnConnected(bool isConnected);
 	void OnSearchInput(const QString& txt);
 
-	void OnSearchResults(QStringList results);
+	void OnSearchResults(QList<SearchResult> results);
 	void setStatus(QString status);
 	void OnSelectionChanged();
     

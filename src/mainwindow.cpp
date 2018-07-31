@@ -48,7 +48,7 @@ MainWindow::MainWindow(QWidget *parent)
     //m_worker->setServerData("chat.freenode.net", 6667, "chupacabot", "#chupacabratest");
     m_worker->setServerData("eu.undernet.org", 6667, "chupacabot", "#bookz");
     connect(m_worker, SIGNAL(sig_connected(bool)), this, SLOT(OnConnected(bool)));
-    connect(m_worker, SIGNAL(sig_searchResults(QStringList)), this, SLOT(OnSearchResults(QStringList)));
+    connect(m_worker, SIGNAL(sig_searchResults(QList<SearchResult>)), this, SLOT(OnSearchResults(QList<SearchResult>)));
     connect(m_listWidget, SIGNAL(itemSelectionChanged()), this, SLOT(OnSelectionChanged()));
     connect(m_worker, SIGNAL(sig_status(QString)), this, SLOT(setStatus(QString)));
 }
@@ -81,7 +81,7 @@ void MainWindow::setStatus(QString status)
 
 void MainWindow::OnConnected(bool is_connected)
 {
-    //m_buttonSearch->setEnabled(is_connected);
+    OnSearchInput(m_textSearch->text());
     m_buttonConnect->setEnabled(!is_connected);
     setStatus((is_connected)?"Connected":"Disconnected");
 }
@@ -112,19 +112,23 @@ void MainWindow::OnDownload()
 	msgBox.exec();
     }
     else
-    {
-	//QMessageBox msgBox;
-	//msgBox.setText("Downloading"+m_listWidget->selectedItems().first()->text());
-	//msgBox.exec();
 	m_worker->launchDownload(m_listWidget->selectedItems().first()->text());
-    }
 }
 
-void MainWindow::OnSearchResults(QStringList results)
+void MainWindow::OnSearchResults(QList<SearchResult> results)
 {
     setStatus("Connected");
     m_listWidget->clear();
-    m_listWidget->addItems(results);
+    QListIterator<SearchResult> it (results);
+
+    while (it.hasNext())
+    {
+	const SearchResult& r = it.next();
+	if (r.bUserOnline)
+	    m_listWidget->addItem(r.downloadString);
+	//else
+	    //qDebug() << r.user << "is offline";
+    }
 }
 
 void MainWindow::OnSearchButton()

@@ -31,6 +31,15 @@ class ChannelInfo
 	QStringList users;
 };
 
+class SearchResult
+{
+    public:
+	QString downloadString;
+	QString user;
+	unsigned long size;
+	bool bUserOnline;
+};
+
 class IrcHelper: public QThread
 {
     Q_OBJECT
@@ -54,7 +63,7 @@ class IrcHelper: public QThread
 
     signals:
 	void sig_connected(bool);
-	void sig_searchResults(QStringList);
+	void sig_searchResults(QList<SearchResult>);
 	void sig_status(QString status);
 
     public slots:

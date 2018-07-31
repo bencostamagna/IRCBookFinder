@@ -194,6 +194,7 @@ void IrcHelper::OnSearchResults(irc_dcc_t dccid)
     QString content;
     FileHelper::extract_zip(filename, content);
 
+    QList<SearchResult> results;
     QStringList list = content.split('\n', QString::SkipEmptyParts);
 
     QMutableListIterator<QString> i(list);
@@ -201,28 +202,39 @@ void IrcHelper::OnSearchResults(irc_dcc_t dccid)
     {
 	QString buf = i.next();
 	if (buf[0] != '!')
+
 	    i.remove();
+	else
+	{
+	    SearchResult res;
+	    QStringList tokens = buf.split("::");
+	    res.downloadString=tokens[0];
+	    res.user = tokens[0].split(" ")[0];
+	    res.user.remove(0, 1);
+	    res.bUserOnline = (m_chanInfo.users.indexOf(QRegExp(res.user)) != -1);
+	    results.append(res);
+	}
     }
 
     qDebug() << "there are " << list.size() << " results";
     m_bSearching = false;
-    emit sig_searchResults(list);
+    emit sig_searchResults(results);
 }
 
 
 void IrcHelper::OnChannelJoined()
 {
-    QListIterator<QString> i(m_chanInfo.users);
-    while (i.hasNext())
-	qDebug() << i.next();
+    //QListIterator<QString> i(m_chanInfo.users);
+    //while (i.hasNext())
+	//qDebug() << i.next();
     if (m_chanInfo.users.indexOf(QRegExp("SearchOok")) != -1)
     {
-	qDebug() << "Search bot online";
+	//qDebug() << "Search bot online";
 	m_bConnected = true;
     }
     else
     {
-	qDebug() << "Search bot offline";
+	//qDebug() << "Search bot offline";
 	QMessageBox msg;
 	msg.setText("Search bot is offline");
 	msg.show();
