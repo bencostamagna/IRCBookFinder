@@ -31,14 +31,20 @@ IrcHelper* IrcHelper::getInstance()
 
 void IrcHelper::setServerData(QString server, int port, QString nick, QString channel)
 {
-    m_server = server;
-    m_port = port;
-    m_nick = nick;
-    m_channel = channel;
+    m_chanInfo.server = server;
+    m_chanInfo.port = port;
+    m_chanInfo.nick = nick;
+    m_chanInfo.channel = channel;
 }
 
+void IrcHelper::updateUserList(QStringList l)
+{
+    QStringListIterator it (l);
+    while (it.hasNext())
+	m_chanInfo.users.append(it.next());
+}
 
-void m_event_connect(irc_session_t * session, const char * event, const char * origin, const char ** params, unsigned int count)
+void event_connect(irc_session_t * session, const char * event, const char * origin, const char ** params, unsigned int count)
 {
     QString str_params;
     for (uint i =0; i < count; ++i)
@@ -55,6 +61,31 @@ void m_event_connect(irc_session_t * session, const char * event, const char * o
 }
 
 
+
+void event_privmsg(irc_session_t * session, const char * event, const char * origin, const char ** params, unsigned int count)
+{
+    QString str_params;
+    for (uint i =0; i < count; ++i)
+    {
+	str_params+="|";
+	str_params+= params[i];
+    }
+    str_params+="|";
+    qDebug() << "event_privmsg: event " << QString(event) << ", origin: " << QString(origin) << ", params: " << str_params;
+}
+
+void event_channel(irc_session_t * session, const char * event, const char * origin, const char ** params, unsigned int count)
+{
+    QString str_params;
+    for (uint i =0; i < count; ++i)
+    {
+	str_params+="|";
+	str_params+= params[i];
+    }
+    str_params+="|";
+    qDebug() << "event_channel: event " << QString(event) << ", origin: " << QString(origin) << ", params: " << str_params;
+}
+
 void callback_dcc_recv_file (irc_session_t * session, irc_dcc_t id, int status, void * ctx, const char * data, unsigned int length)
 {
     IrcHelper::getInstance()->OnFileRcvd(session, id, status, ctx, data, length);
@@ -68,16 +99,22 @@ void callback_event_dcc_file(irc_session_t* session, const char* nick, const cha
 }
 
 
-
-//dummy event_numeric
 void event_numeric(irc_session_t * session, unsigned int event, const char * origin, const char ** params, unsigned int count)
 {
-    QString str =  "event_numeric: "+QString::number(event);
-    for (uint i = 0; i < count; ++i)
-	str += " | "+QString(params[i]);
-    qDebug() << str;
-}
+    if (event == 353)
+    {
+	IrcHelper::getInstance()->updateUserList(QString(params[count-1]).split(" "));;
+    }
+    else
+    {
+	// unknown event, just print it on the debug channel
+	QString str =  "event_numeric: "+QString::number(event);
+	for (uint i = 0; i < count; ++i)
+	    str += " | "+QString(params[i]);
+       qDebug() << str;
 
+    }
+}
 
 void IrcHelper::ProtocolMessageBox()
 {
@@ -105,9 +142,10 @@ void IrcHelper::OnFileRcvd(irc_session_t * session, irc_dcc_t id, int status, vo
 	//IrcHelper::getInstance()->ProtocolMessageBox();
 	
 	qDebug() << "Received status " << QString::number(status) << ": " << irc_strerror(status);
-	m_bSearching = false;
-	m_bDownloading = false;
-	emit sig_status("Connected");
+	irc_dcc_accept(session, id, 0, callback_dcc_recv_file);
+	//m_bSearching = false;
+	//m_bDownloading = false;
+	//emit sig_status("Connected");
     }
     else if ( data == 0 )
     {
@@ -164,7 +202,7 @@ void IrcHelper::OnSearchResults(irc_dcc_t dccid)
 
 void IrcHelper::OnConnected()
 {
-    if (irc_cmd_join(m_session, m_channel.toUtf8(), 0 ))
+    if (irc_cmd_join(m_session, m_chanInfo.channel.toUtf8(), 0 ))
 	ProtocolMessageBox();
     emit sig_connected(true);
 }
@@ -172,7 +210,11 @@ void IrcHelper::OnConnected()
 
 void IrcHelper::searchString(QString str)
 {
-    if (irc_cmd_msg(m_session, m_channel.toUtf8(), "@search "+str.toUtf8()))
+    //QStringListIterator it (m_chanInfo.users);
+    //qDebug() << "User list: ";
+    //while (it.hasNext())
+	//qDebug() << it.next();
+    if (irc_cmd_msg(m_session, m_chanInfo.channel.toUtf8(), "@search "+str.toUtf8()))
 	ProtocolMessageBox();
     qDebug() << "Searching " << str;
     m_bSearching=true;
@@ -182,7 +224,7 @@ void IrcHelper::launchDownload(QString str)
 {
     QString msg = str.split("::").first().trimmed();
     qDebug() << "Sending: " << msg;
-    if (irc_cmd_msg(m_session, m_channel.toUtf8(), msg.toUtf8()))
+    if (irc_cmd_msg(m_session, m_chanInfo.channel.toUtf8(), msg.toUtf8()))
 	ProtocolMessageBox();
     m_bDownloading=true;
 }
@@ -210,15 +252,18 @@ void IrcHelper::run()
     memset(&callbacks, 0, sizeof(callbacks));
 
     // Set up the mandatory events
-    callbacks.event_connect = m_event_connect;
+    callbacks.event_connect = event_connect;
     callbacks.event_numeric = event_numeric;
     callbacks.event_dcc_send_req = callback_event_dcc_file;
-    // Set up the rest of events
+    callbacks.event_privmsg = event_privmsg;
+    callbacks.event_channel = event_channel;
 
+    m_chanInfo.users.clear();
+    
     // Now create the m_session
     m_session = irc_create_session(&callbacks);
 
-    if (!m_session || irc_connect(m_session, m_server.toUtf8(), m_port, 0, m_nick.toUtf8(), m_nick.toUtf8(), m_nick.toUtf8()))
+    if (!m_session || irc_connect(m_session, m_chanInfo.server.toUtf8(), m_chanInfo.port, 0, m_chanInfo.nick.toUtf8(), m_chanInfo.nick.toUtf8(), m_chanInfo.nick.toUtf8()))
     {
 	emit sig_connected(false);
 	ProtocolMessageBox();

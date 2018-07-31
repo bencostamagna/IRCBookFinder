@@ -20,6 +20,17 @@
 
 #define IRC_TIMEOUT 30
 
+class ChannelInfo
+{
+    public:
+        QString server;
+        int port;
+        QString nick;
+        QString channel;
+
+	QStringList users;
+};
+
 class IrcHelper: public QThread
 {
     Q_OBJECT
@@ -30,7 +41,9 @@ class IrcHelper: public QThread
 	void run();
 	bool isConnected();
 	void ProtocolMessageBox();
+
 	void setServerData(QString server, int port, QString nick, QString channel);
+	void updateUserList(QStringList l);
 
 	void OnConnected();
 	void OnFileTransfer(irc_session_t* session, const char* nick, const char* addr, const char* filename, unsigned long size, irc_dcc_t dccid);
@@ -53,10 +66,7 @@ class IrcHelper: public QThread
 
     private:
 	irc_session_t *m_session;
-	QString m_server;
-	int m_port;
-	QString m_nick;
-	QString m_channel;
+	ChannelInfo m_chanInfo;
 
 	std::map<irc_dcc_t, FileInfo> m_fileCatalog;
 
